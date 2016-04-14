@@ -10,31 +10,45 @@ import java.util.Map;
 
 public class Artist implements Comparable<Artist>, Parcelable {
 
+    public static final Creator<Artist> CREATOR = new Creator<Artist>() {
+        @Override
+        public Artist createFromParcel(Parcel in) {
+            return new Artist(in);
+        }
+
+        @Override
+        public Artist[] newArray(int size) {
+            return new Artist[size];
+        }
+    };
     @SerializedName("id")
     private int mId;
-
     @SerializedName("name")
     private String mName;
-
     @SerializedName("genres")
     private String[] mGenres;
-
     @SerializedName("tracks")
     private int mCountOfTracks;
-
     @SerializedName("albums")
     private int mCountOfAlbums;
-
     @SerializedName("link")
-    private String mUrl;
-
+    private String mSiteUrl;
     @SerializedName("description")
     private String mDescription;
-
     @SerializedName("cover")
     private Map<String, String> mCover;
+    private Bitmap mSmallCoverBitmap;
 
-    private Bitmap mBitmap;
+    protected Artist(Parcel in) {
+        mId = in.readInt();
+        mName = in.readString();
+        mGenres = in.createStringArray();
+        mCountOfTracks = in.readInt();
+        mCountOfAlbums = in.readInt();
+        mSiteUrl = in.readString();
+        mDescription = in.readString();
+        mSmallCoverBitmap = in.readParcelable(Bitmap.class.getClassLoader());
+    }
 
     public int getId() {
         return mId;
@@ -56,8 +70,8 @@ public class Artist implements Comparable<Artist>, Parcelable {
         return mCountOfAlbums;
     }
 
-    public String getUrl() {
-        return mUrl;
+    public String getSiteUrl() {
+        return mSiteUrl;
     }
 
     public String getDescription() {
@@ -72,35 +86,18 @@ public class Artist implements Comparable<Artist>, Parcelable {
         return mCover.get("small");
     }
 
+    public Bitmap getSmallCoverBitmap() {
+        return mSmallCoverBitmap;
+    }
+
+    public void setSmallCoverBitmap(Bitmap smallCoverBitmap) {
+        mSmallCoverBitmap = smallCoverBitmap;
+    }
 
     @Override
     public int compareTo(Artist another) {
         return getName().compareTo(another.getName());
     }
-
-
-    protected Artist(Parcel in) {
-        mId = in.readInt();
-        mName = in.readString();
-        mGenres = in.createStringArray();
-        mCountOfTracks = in.readInt();
-        mCountOfAlbums = in.readInt();
-        mUrl = in.readString();
-        mDescription = in.readString();
-        mBitmap = in.readParcelable(Bitmap.class.getClassLoader());
-    }
-
-    public static final Creator<Artist> CREATOR = new Creator<Artist>() {
-        @Override
-        public Artist createFromParcel(Parcel in) {
-            return new Artist(in);
-        }
-
-        @Override
-        public Artist[] newArray(int size) {
-            return new Artist[size];
-        }
-    };
 
     @Override
     public int describeContents() {
@@ -114,8 +111,8 @@ public class Artist implements Comparable<Artist>, Parcelable {
         dest.writeStringArray(mGenres);
         dest.writeInt(mCountOfTracks);
         dest.writeInt(mCountOfAlbums);
-        dest.writeString(mUrl);
+        dest.writeString(mSiteUrl);
         dest.writeString(mDescription);
-        dest.writeParcelable(mBitmap, flags);
+        dest.writeParcelable(mSmallCoverBitmap, flags);
     }
 }

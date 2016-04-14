@@ -16,6 +16,7 @@
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:fitsSystemWindows="false"
+            android:minHeight="300dp"
             android:scaleType="fitCenter"
             android:transitionName="cover_image"/>
 
@@ -43,21 +44,19 @@
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_below="@id/fragment_detail_name_text_box"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_below="@id/fragment_detail_name_text_box">
 
             <TextView
                 android:id="@+id/fragment_detail_description_text_view"
                 style="@style/Base.TextAppearance.AppCompat.Subhead"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"
                 />
 
         </ScrollView>
-
 
 
     </RelativeLayout>

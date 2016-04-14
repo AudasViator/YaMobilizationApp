@@ -1,6 +1,5 @@
 package pro.audasviator.yamobilizationapp;
 
-import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -19,7 +18,8 @@ import com.squareup.picasso.Picasso;
 public class ArtistDetailFragment extends Fragment {
     private static final String ARG_ARTIST_ID = "artist_id";
 
-    private int mId;
+    private Artist mArtist;
+
     private ImageView mCoverImageView;
     private TextView mTextView;
     private TextView mDescriptionTextView;
@@ -35,10 +35,11 @@ public class ArtistDetailFragment extends Fragment {
         return fragment;
     }
 
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        int id = getArguments().getInt(ARG_ARTIST_ID);
+        mArtist = ArtistLab.get(getActivity()).getArtist(id);
     }
 
     @Nullable
@@ -46,23 +47,20 @@ public class ArtistDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_artist_detail, container, false);
 
-        String name = getActivity().getIntent().getStringExtra("Name");
-        String url = getActivity().getIntent().getStringExtra("Cover");
-        Artist artist = (Artist) getActivity().getIntent().getSerializableExtra("Artist");
-        Drawable cover = new BitmapDrawable(getResources(), (Bitmap) getActivity().getIntent().getParcelableExtra("Image"));
+        Drawable cover = new BitmapDrawable(getResources(), mArtist.getSmallCoverBitmap());
 
         mTextView = (TextView) view.findViewById(R.id.fragment_detail_name_text_box);
-        mTextView.setText(name);
+        mTextView.setText(mArtist.getName());
 
         mCoverImageView = (ImageView) view.findViewById(R.id.fragment_detail_cover_image_view);
         mDescriptionTextView = (TextView) view.findViewById(R.id.fragment_detail_description_text_view);
-        mDescriptionTextView.setText(artist.getDescription());
+        mDescriptionTextView.setText(mArtist.getDescription());
 
         mToolbar = (Toolbar) view.findViewById(R.id.fragment_detail_toolbar);
         mToolbar.setTitle("");
         ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
 
-        Picasso.with(getActivity()).load(url).placeholder(cover).into(mCoverImageView);
+        Picasso.with(getActivity()).load(mArtist.getUrlOfBigCover()).placeholder(cover).into(mCoverImageView);
 
         return view;
     }

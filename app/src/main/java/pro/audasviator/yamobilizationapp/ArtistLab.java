@@ -13,6 +13,10 @@ public class ArtistLab {
 
     private List<Artist> mArtists;
 
+    private ArtistLab(Context context) {
+        mArtists = new ArrayList<>();
+    }
+
     public static ArtistLab get(Context context) {
         if (sArtistLab == null) {
             sArtistLab = new ArtistLab(context);
@@ -20,16 +24,12 @@ public class ArtistLab {
         return sArtistLab;
     }
 
-    private ArtistLab(Context context) {
-        mArtists = new ArrayList<>();
-    }
-
-    public void addArtist(Artist artist) {
-        mArtists.add(artist);
-    }
-
     public List<Artist> getArtists() {
         return mArtists;
+    }
+
+    public void setArtists(List<Artist> artists) {
+        mArtists = artists;
     }
 
     public Artist getArtist(int id) {
