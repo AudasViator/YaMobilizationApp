@@ -33,7 +33,6 @@ public class ArtistDetailActivity extends AppCompatActivity {
         mArtists = ArtistLab.get(this).getArtists();
 
         FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentById(R.id.fragment_detail_container_view_pager);
 
         mViewPager.setAdapter(new FragmentPagerAdapter(fm) {
             @Override
@@ -55,11 +54,6 @@ public class ArtistDetailActivity extends AppCompatActivity {
             }
         }
 
-        if (fragment == null) {
-            fragment = ArtistDetailFragment.newInstance(artistId);
-            fm.beginTransaction()
-                    .add(R.id.fragment_detail_container_view_pager, fragment)
-                    .commit();
-        }
+
     }
 }

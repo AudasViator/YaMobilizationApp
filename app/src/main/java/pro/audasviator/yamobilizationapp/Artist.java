@@ -1,14 +1,15 @@
 package pro.audasviator.yamobilizationapp;
 
-import android.graphics.Bitmap;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class Artist implements Comparable<Artist>, Parcelable {
+public class Artist implements Comparable<Artist>, Parcelable, Serializable {
 
     public static final Creator<Artist> CREATOR = new Creator<Artist>() {
         @Override
@@ -37,7 +38,6 @@ public class Artist implements Comparable<Artist>, Parcelable {
     private String mDescription;
     @SerializedName("cover")
     private Map<String, String> mCover;
-    private Bitmap mSmallCoverBitmap;
 
     protected Artist(Parcel in) {
         mId = in.readInt();
@@ -47,7 +47,6 @@ public class Artist implements Comparable<Artist>, Parcelable {
         mCountOfAlbums = in.readInt();
         mSiteUrl = in.readString();
         mDescription = in.readString();
-        mSmallCoverBitmap = in.readParcelable(Bitmap.class.getClassLoader());
     }
 
     public int getId() {
@@ -86,16 +85,8 @@ public class Artist implements Comparable<Artist>, Parcelable {
         return mCover.get("small");
     }
 
-    public Bitmap getSmallCoverBitmap() {
-        return mSmallCoverBitmap;
-    }
-
-    public void setSmallCoverBitmap(Bitmap smallCoverBitmap) {
-        mSmallCoverBitmap = smallCoverBitmap;
-    }
-
     @Override
-    public int compareTo(Artist another) {
+    public int compareTo(@NonNull Artist another) {
         return getName().compareTo(another.getName());
     }
 
@@ -113,6 +104,5 @@ public class Artist implements Comparable<Artist>, Parcelable {
         dest.writeInt(mCountOfAlbums);
         dest.writeString(mSiteUrl);
         dest.writeString(mDescription);
-        dest.writeParcelable(mSmallCoverBitmap, flags);
     }
 }

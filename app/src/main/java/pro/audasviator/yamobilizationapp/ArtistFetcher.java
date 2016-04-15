@@ -513,9 +513,8 @@ public class ArtistFetcher {
         Gson gson = new Gson();
         Type type = new TypeToken<List<Artist>>() {
         }.getType();
-        List<Artist> artistList = gson.fromJson(json, type);
 
-        return artistList;
+        return gson.fromJson(json, type);
     }
 
     private String getUrlString(String urlSpec) throws IOException {
@@ -534,7 +533,7 @@ public class ArtistFetcher {
                 throw new IOException(connection.getResponseMessage() + ": with " + urlSpec);
             }
 
-            int bytesRead = 0;
+            int bytesRead;
             byte[] buffer = new byte[1024];
             while ((bytesRead = in.read(buffer)) > 0) {
                 out.write(buffer, 0, bytesRead);

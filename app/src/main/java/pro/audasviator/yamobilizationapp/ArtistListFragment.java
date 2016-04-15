@@ -1,12 +1,7 @@
 package pro.audasviator.yamobilizationapp;
 
-import android.app.ActivityOptions;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -19,9 +14,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.util.List;
 
@@ -29,6 +22,7 @@ public class ArtistListFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private ArtistLab mArtistLab;
     private List<Artist> mArtistList;
+    private Callbacks mCallbacks;
 
     public static ArtistListFragment newInstance() {
         return new ArtistListFragment();
@@ -41,6 +35,12 @@ public class ArtistListFragment extends Fragment {
         mArtistList = mArtistLab.getArtists();
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -48,11 +48,21 @@ public class ArtistListFragment extends Fragment {
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.fragment_artists_list_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mRecyclerView.setAdapter(new ArtistAdapter());
+        mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
 
         new FetchArtistTask().execute();
 
         return view;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = null;
+    }
+
+    public interface Callbacks {
+        void onArtistSelected(Artist artist, @Nullable View animatedView);
     }
 
     private class ArtistHolder extends RecyclerView.ViewHolder {
@@ -69,14 +79,7 @@ public class ArtistListFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = ArtistDetailActivity.newIntent(getActivity(), mArtist.getId());
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), mCoverImageView, "cover_image");
-                        startActivity(intent, options.toBundle());
-                    } else {
-                        startActivity(intent);
-                    }
+                    mCallbacks.onArtistSelected(mArtist, mCoverImageView);
                 }
             });
         }
@@ -87,41 +90,16 @@ public class ArtistListFragment extends Fragment {
             String name = artist.getName();
             mNameTextView.setText(name);
 
-            Picasso.with(getActivity()).load(coverUrl).into(mCoverImageView, new Callback() {
-                @Override
-                public void onSuccess() {
-                    Bitmap bitmap = ((BitmapDrawable) mCoverImageView.getDrawable()).getBitmap();
-                    mArtist.setSmallCoverBitmap(bitmap);
-                }
-
-                @Override
-                public void onError() {
-
-                }
-            });
-        }
-
-        private class SmallCoverTarget implements Target {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                mCoverImageView.setImageBitmap(bitmap);
-                mArtist.setSmallCoverBitmap(bitmap);
-            }
-
-            @Override
-            public void onBitmapFailed(Drawable errorDrawable) {
-                mCoverImageView.setImageDrawable(errorDrawable);
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                mCoverImageView.setImageDrawable(placeHolderDrawable);
-            }
+            Picasso.with(getContext()).load(coverUrl).placeholder(R.drawable.the_place_holder).into(mCoverImageView);
         }
     }
 
     private class ArtistAdapter extends RecyclerView.Adapter<ArtistHolder> {
-        // TODO: Think about private list
+        private List<Artist> mArtists;
+
+        public ArtistAdapter(List<Artist> artists) {
+            mArtists = artists;
+        }
 
         @Override
         public ArtistHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -132,7 +110,7 @@ public class ArtistListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(ArtistHolder holder, int position) {
-            Artist artist = mArtistList.get(position);
+            Artist artist = mArtists.get(position);
             holder.bindHolder(artist);
         }
 
@@ -151,7 +129,7 @@ public class ArtistListFragment extends Fragment {
                 String json = artistFetcher.getJson();
                 List<Artist> artistList = artistFetcher.getArtistsFromJson(json);
                 mArtistLab.setArtists(artistList);
-                mArtistList = mArtistLab.getArtists();
+                mArtistList = artistList;
             } catch (Exception e) {
                 Log.e("TEST", "" + e.getMessage());
             }
@@ -165,7 +143,7 @@ public class ArtistListFragment extends Fragment {
             mRecyclerView.getAdapter().notifyDataSetChanged();
 
             mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-            mRecyclerView.setAdapter(new ArtistAdapter());
+            mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
         }
     }
 }
