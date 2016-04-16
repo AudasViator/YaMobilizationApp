@@ -1,7 +1,14 @@
 <resources>
     <string name="app_name">YaMobilizationApp</string>
+    <string name="fragment_list_name">Artists</string>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <plurals name="count_of_songs">
+        <item quantity="one">%1$s song</item>
+        <item quantity="other">%1$s songs</item>
+    </plurals>
+
+    <plurals name="count_of_albums">
+        <item quantity="one">%1$s album</item>
+        <item quantity="other">%1$s albums</item>
+    </plurals>
 </resources>

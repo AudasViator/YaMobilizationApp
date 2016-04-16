@@ -1,18 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="wrap_content"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
               android:layout_height="wrap_content"
+              android:layout_margin="12dp"
+              android:background="?attr/selectableItemBackground"
               android:orientation="horizontal">
 
     <ImageView
         android:id="@+id/artist_list_item_image_image_view"
-        android:layout_width="60dp"
-        android:layout_height="60dp"/>
+        android:layout_width="120dp"
+        android:layout_height="120dp"/>
 
-    <TextView
-        android:id="@+id/artist_list_item_name_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:transitionName="name_text"/>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/artist_list_item_name_text_view"
+            style="@style/Base.TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            tools:text="The Prodigy"/>
+
+        <TextView
+            android:id="@+id/artist_list_item_count_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            tools:text="120 songs, 49 albums"/>
+
+        <TextView
+            android:id="@+id/artist_list_item_genres_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/artist_list_item_count_text_view"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_gravity="bottom"
+            android:layout_marginTop="12dp"
+            tools:text="Genre, genre, genre, big genre"/>
+
+    </RelativeLayout>
 
 </LinearLayout>

@@ -505,8 +505,8 @@ public class ArtistFetcher {
                 "\t\t}\n" +
                 "\t}]";
 
-        return json;
-        //return getUrlString(JSON_URL);
+        //return json;
+        return getUrlString(JSON_URL);
     }
 
     public List<Artist> getArtistsFromJson(String json) {

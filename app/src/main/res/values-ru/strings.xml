@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">яМобилизацияПрога</string>
+    <string name="fragment_list_name">Исполнители</string>
+
+    <plurals name="count_of_songs">
+        <item quantity="one">%1$s песня</item>
+        <item quantity="few">%1$s песни</item>
+        <item quantity="many">%1$s песен</item>
+        <item quantity="other">%1$s песен</item>
+    </plurals>
+
+    <plurals name="count_of_albums">
+        <item quantity="one">%1$s альбом</item>
+        <item quantity="few">%1$s альбома</item>
+        <item quantity="many">%1$s альбомов</item>
+        <item quantity="other">%1$s альбомов</item>
+    </plurals>
+</resources>

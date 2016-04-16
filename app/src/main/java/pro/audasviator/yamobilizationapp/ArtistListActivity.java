@@ -1,13 +1,10 @@
 package pro.audasviator.yamobilizationapp;
 
-import android.app.ActivityOptions;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.view.View;
 
 public class ArtistListActivity extends AppCompatActivity
         implements ArtistListFragment.Callbacks {
@@ -28,15 +25,10 @@ public class ArtistListActivity extends AppCompatActivity
         }
     }
 
-    public void onArtistSelected(Artist artist, View animatedView) {
+    public void onArtistSelected(Artist artist) {
         if (findViewById(R.id.fragment_detail_container) == null) {
             Intent intent = ArtistDetailActivity.newIntent(this, artist.getId());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(this, animatedView, "cover_image");
-                startActivity(intent, options.toBundle());
-            } else {
-                startActivity(intent);
-            }
+            startActivity(intent);
         } else {
             Fragment newDetail = ArtistDetailFragment.newInstance(artist.getId());
             getSupportFragmentManager().beginTransaction()

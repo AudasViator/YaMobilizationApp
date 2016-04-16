@@ -6,8 +6,12 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.OnApplyWindowInsetsListener;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.WindowInsetsCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 
 import java.util.List;
 
@@ -46,6 +50,26 @@ public class ArtistDetailActivity extends AppCompatActivity {
                 return mArtists.size();
             }
         });
+
+        ViewCompat.setOnApplyWindowInsetsListener(mViewPager,
+                new OnApplyWindowInsetsListener() {
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat insets) {
+                        insets = ViewCompat.onApplyWindowInsets(v, insets);
+                        if (insets.isConsumed()) {
+                            return insets;
+                        }
+
+                        boolean consumed = false;
+                        for (int i = 0, count = mViewPager.getChildCount(); i < count; i++) {
+                            ViewCompat.dispatchApplyWindowInsets(mViewPager.getChildAt(i), insets);
+                            if (insets.isConsumed()) {
+                                consumed = true;
+                            }
+                        }
+                        return consumed ? insets.consumeSystemWindowInsets() : insets;
+                    }
+                });
 
         for (int i = 0; i < mArtists.size(); i++) {
             if (mArtists.get(i).getId() == artistId) {

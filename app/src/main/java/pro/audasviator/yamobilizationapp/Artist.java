@@ -3,6 +3,7 @@ package pro.audasviator.yamobilizationapp;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -57,8 +58,9 @@ public class Artist implements Comparable<Artist>, Parcelable, Serializable {
         return mName;
     }
 
-    public String[] getGenres() {
-        return mGenres;
+    public String getGenres() {
+        //Когда лень писать даже преобразование из массива
+        return TextUtils.join(", ", mGenres);
     }
 
     public int getCountOfTracks() {

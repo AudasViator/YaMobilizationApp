@@ -28,7 +28,7 @@
             android:layout_alignBottom="@id/fragment_detail_cover_image_view"
             android:layout_alignLeft="@id/fragment_detail_cover_image_view"
             android:layout_alignRight="@id/fragment_detail_cover_image_view"
-            android:background="#dc757575"
+            android:background="@color/grey_artist_name"
             android:gravity="center"
             android:textColor="#FFFFFFFF"
             android:transitionName="name_text"/>
@@ -40,15 +40,27 @@
         android:layout_weight="3"
         android:fitsSystemWindows="true">
 
-        <TextView
-            android:id="@+id/fragment_detail_description_text_view"
-            style="@style/Base.TextAppearance.AppCompat.Subhead"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            />
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/fragment_detail_count_text_box"
+                style="@style/TextAppearance.AppCompat.Headline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:id="@+id/fragment_detail_description_text_view"
+                style="@style/Base.TextAppearance.AppCompat.Subhead"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                />
+        </LinearLayout>
     </ScrollView>
 
 </LinearLayout>
