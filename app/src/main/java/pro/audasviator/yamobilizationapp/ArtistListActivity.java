@@ -2,38 +2,34 @@ package pro.audasviator.yamobilizationapp;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
-public class ArtistListActivity extends AppCompatActivity
-        implements ArtistListFragment.Callbacks {
+public class ArtistListActivity extends AppCompatActivity {
+    private static final int REQUEST_CODE = 42;
+
+    private ArtistListFragment mArtistListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_artist_list);
+        setTitle(R.string.fragment_list_name);
 
-        setContentView(R.layout.activity_list_and_detail);
         FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentById(R.id.fragment_list_container);
-
-        if (fragment == null) {
-            fragment = ArtistListFragment.newInstance();
+        mArtistListFragment = (ArtistListFragment) fm.findFragmentById(R.id.fragment_list_container);
+        if (mArtistListFragment == null) {
+            mArtistListFragment = ArtistListFragment.newInstance();
             fm.beginTransaction()
-                    .add(R.id.fragment_list_container, fragment)
+                    .add(R.id.fragment_list_container, mArtistListFragment)
                     .commit();
         }
     }
 
-    public void onArtistSelected(Artist artist) {
-        if (findViewById(R.id.fragment_detail_container) == null) {
-            Intent intent = ArtistDetailActivity.newIntent(this, artist.getId());
-            startActivity(intent);
-        } else {
-            Fragment newDetail = ArtistDetailFragment.newInstance(artist.getId());
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_detail_container, newDetail)
-                    .commit();
-        }
+    // После возвращения из деталей, передаёт во фрагмент куда пользователь доскролил
+    @Override
+    public void onActivityReenter(int resultCode, Intent data) {
+        super.onActivityReenter(resultCode, data);
+        mArtistListFragment.onActivityReenter(data);
     }
 }

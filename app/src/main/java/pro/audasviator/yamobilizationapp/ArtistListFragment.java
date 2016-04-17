@@ -1,51 +1,103 @@
 package pro.audasviator.yamobilizationapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.SharedElementCallback;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ArtistListFragment extends Fragment {
+    public static final String EXTRA_STARTING_POSITION = "startingPosition";
+    public static final String EXTRA_CURRENT_POSITION = "currentPosition";
+
     private RecyclerView mRecyclerView;
     private ArtistLab mArtistLab;
     private List<Artist> mArtistList;
-    private Callbacks mCallbacks;
     private SwipeRefreshLayout mRefreshLayout;
+
+    private Bundle mTmpReenterState;
+    private final SharedElementCallback mCallback = new SharedElementCallback() {
+        @Override
+        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+            if (mTmpReenterState != null) {
+                int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
+                int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
+                if (startingPosition != currentPosition) {
+                    // If startingPosition != currentPosition the user must have swiped to a
+                    // different page in the DetailsActivity. We must update the shared element
+                    // so that the correct one falls into place.
+                    String newTransitionName = String.valueOf(mArtistList.get(currentPosition).getId());
+                    View newSharedElement = mRecyclerView.findViewWithTag(newTransitionName);
+                    if (newSharedElement != null) {
+                        names.clear();
+                        names.add(newTransitionName);
+                        sharedElements.clear();
+                        sharedElements.put(newTransitionName, newSharedElement);
+                    }
+                }
+
+                mTmpReenterState = null;
+            }
+        }
+    };
+    private boolean mIsDetailsActivityStarted;
 
     public static ArtistListFragment newInstance() {
         return new ArtistListFragment();
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mArtistLab = ArtistLab.get(getActivity());
-        mArtistList = mArtistLab.getArtists();
+    public static Intent intentForReenter(int currentPosition, int startingPosition) {
+        Intent data = new Intent();
+        data.putExtra(EXTRA_STARTING_POSITION, startingPosition);
+        data.putExtra(EXTRA_CURRENT_POSITION, currentPosition);
+        return data;
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.setExitSharedElementCallback(mCallback);
+
+        mArtistLab = ArtistLab.get(getActivity());
+        mArtistList = mArtistLab.getArtists();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mIsDetailsActivityStarted = false;
     }
 
     @Nullable
@@ -67,7 +119,10 @@ public class ArtistListFragment extends Fragment {
         mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
         mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(getContext()));
 
-        //new FetchArtistTask().execute();
+        if (mArtistList.size() == 0) {
+            mRefreshLayout.setRefreshing(true);
+            new FetchArtistTask().execute();
+        }
 
         return view;
     }
@@ -75,20 +130,37 @@ public class ArtistListFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mCallbacks = null;
     }
 
-    public interface Callbacks {
-        void onArtistSelected(Artist artist);
+    // После возвращения из деталей проверяем, скролил ли пользователь
+    // Если да, то скролим список и пускаем анимацию
+    public void onActivityReenter(Intent data) {
+        mTmpReenterState = new Bundle(data.getExtras());
+        int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
+        int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
+        if (startingPosition != currentPosition) {
+            mRecyclerView.scrollToPosition(currentPosition);
+        }
+
+        getActivity().supportPostponeEnterTransition();
+        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                // Сначала должны забиндиться вьюхи (дабы понять, куда двигать изображение)
+                mRecyclerView.requestLayout();
+                getActivity().supportStartPostponedEnterTransition();
+                return true;
+            }
+        });
     }
 
     private class ArtistHolder extends RecyclerView.ViewHolder {
-        private Artist mArtist;
         private ImageView mCoverImageView;
         private TextView mNameTextView;
         private TextView mGenresTextView;
         private TextView mCountTextView;
-
+        private int mPosition;
 
         public ArtistHolder(View itemView) {
             super(itemView);
@@ -101,13 +173,19 @@ public class ArtistListFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mCallbacks.onArtistSelected(mArtist);
+                    Intent intent = ArtistDetailActivity.newIntent(getContext(), mPosition);
+                    intent.putExtra(EXTRA_STARTING_POSITION, mPosition);
+
+                    if (!mIsDetailsActivityStarted) {
+                        mIsDetailsActivityStarted = true;
+                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mCoverImageView, ViewCompat.getTransitionName(mCoverImageView));
+                        startActivity(intent, options.toBundle());
+                    }
                 }
             });
         }
 
-        public void bindHolder(Artist artist) {
-            mArtist = artist;
+        public void bindHolder(Artist artist, int position) {
             String coverUrl = artist.getUrlOfSmallCover();
             String name = artist.getName();
             String genres = artist.getGenres();
@@ -120,7 +198,14 @@ public class ArtistListFragment extends Fragment {
             mGenresTextView.setText(genres);
             mCountTextView.setText(count);
 
-            Glide.with(ArtistListFragment.this).load(coverUrl).placeholder(R.drawable.the_place_holder).into(mCoverImageView);
+            mPosition = position;
+
+            // Используем id в качестве тега (для поиска вьюхи) и имени для анимации
+            String tagAndName = String.valueOf(artist.getId());
+            ViewCompat.setTransitionName(mCoverImageView, tagAndName);
+            mCoverImageView.setTag(tagAndName);
+
+            Picasso.with(getContext()).load(coverUrl).placeholder(R.drawable.the_place_holder).into(mCoverImageView);
         }
     }
 
@@ -141,7 +226,7 @@ public class ArtistListFragment extends Fragment {
         @Override
         public void onBindViewHolder(ArtistHolder holder, int position) {
             Artist artist = mArtists.get(position);
-            holder.bindHolder(artist);
+            holder.bindHolder(artist, position);
         }
 
         @Override
@@ -178,6 +263,7 @@ public class ArtistListFragment extends Fragment {
         }
     }
 
+    // Просто рисуем разделители между вьюхами в списке
     private class SimpleDividerItemDecoration extends RecyclerView.ItemDecoration {
         private Drawable mDivider;
 

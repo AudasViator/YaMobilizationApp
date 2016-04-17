@@ -46,13 +46,8 @@ public class ArtistLab {
         saveArtists(mArtists);
     }
 
-    public Artist getArtist(int id) {
-        for (Artist artist : mArtists) {
-            if (artist.getId() == id) {
-                return artist;
-            }
-        }
-        return null;
+    public Artist getArtist(int position) {
+        return mArtists.get(position);
     }
 
     public void saveArtists(List<Artist> artists) {

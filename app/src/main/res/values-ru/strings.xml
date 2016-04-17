@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">яМобилизацияПрога</string>
     <string name="fragment_list_name">Исполнители</string>
 
     <plurals name="count_of_songs">

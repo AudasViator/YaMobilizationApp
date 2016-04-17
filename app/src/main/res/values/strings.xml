@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">YaMobilizationApp</string>
+    <string name="app_name" translatable="false">YaMobilizationApp</string>
     <string name="fragment_list_name">Artists</string>
 
     <plurals name="count_of_songs">
