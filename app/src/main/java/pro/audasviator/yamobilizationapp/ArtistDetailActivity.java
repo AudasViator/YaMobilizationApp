@@ -33,23 +33,18 @@ public class ArtistDetailActivity extends AppCompatActivity {
     private int mStartingPosition;
     private boolean mIsReturning;
 
-    // Вызывается после кнопки назад в деталях, но перед анимацией
+    // Вызывается после кнопки назад, но перед анимацией
     // Добавляет текущее изображение в shared elements
     private final SharedElementCallback mCallback = new SharedElementCallback() {
         @Override
         public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
             if (mIsReturning) {
+                // Если CollapsingBar свёрнут, то будет null
                 ImageView sharedElement = mCurrentArtistDetailFragment.getCoverImage();
                 if (sharedElement == null) {
-                    // If shared element is null, then it has been scrolled off screen and
-                    // no longer visible. In this case we cancel the shared element transition by
-                    // removing the shared element from the shared elements map.
                     names.clear();
                     sharedElements.clear();
                 } else if (mStartingPosition != mCurrentPosition) {
-                    // If the user has swiped to a different ViewPager page, then we need to
-                    // remove the old shared element and replace it with the new shared element
-                    // that should be transitioned instead.
                     names.clear();
                     String transactionName = ViewCompat.getTransitionName(sharedElement);
                     names.add(transactionName);
@@ -82,12 +77,15 @@ public class ArtistDetailActivity extends AppCompatActivity {
         }
 
         mViewPager = (ViewPager) findViewById(R.id.fragment_detail_container_view_pager);
-        mArtists = ArtistLab.get(this).getArtists();
+        mArtists = ArtistLab.get(getApplicationContext()).getArtists();
 
         FragmentManager fm = getSupportFragmentManager();
 
         mViewPager.setAdapter(new ArtistDetailFragmentPagerAdapter(fm));
         mViewPager.setCurrentItem(mCurrentPosition);
+        mViewPager.setPageTransformer(false, new ZoomOutPageTransformer(mViewPager));
+        mViewPager.setClipChildren(false);
+        mViewPager.setClipToPadding(false);
 
         // Отслеживаем текущую страницу для изменения изображения для анимации
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -125,12 +123,53 @@ public class ArtistDetailActivity extends AppCompatActivity {
         outState.putInt(STATE_CURRENT_PAGE_POSITION, mCurrentPosition);
     }
 
-    // Перед анимацией, отправляем в ArtistListFragment
     @Override
-    public void finishAfterTransition() {
+    public void onBackPressed() {
         mIsReturning = true;
-        setResult(RESULT_OK, ArtistListFragment.intentForReenter(mCurrentPosition, mStartingPosition));
-        super.finishAfterTransition();
+        setResult(RESULT_OK, ArtistListFragment.makeIntentForAnimation(mCurrentPosition, mStartingPosition));
+        super.onBackPressed();
+    }
+
+    private static class ZoomOutPageTransformer implements ViewPager.PageTransformer {
+
+        private static final float MIN_SCALE = 0.8f;
+
+        private ViewPager mViewPager;
+        private float mPositionFixer;
+        private boolean isSetFixer = false;
+
+        public ZoomOutPageTransformer(ViewPager viewPager) {
+            mViewPager = viewPager;
+        }
+
+        public void transformPage(View view, float position) {
+            final int pageWidth = view.getWidth();
+            final int pageHeight = view.getHeight();
+
+            if (!isSetFixer) {
+                final int mClientWidth = mViewPager.getMeasuredWidth() -
+                        mViewPager.getPaddingLeft() - mViewPager.getPaddingRight();
+                mPositionFixer = ((float) ViewCompat.getPaddingStart(mViewPager)) / mClientWidth;
+                isSetFixer = true;
+            }
+
+            position -= mPositionFixer;
+
+            if (position <= 1) {
+                final float scaleFactor = Math.max(MIN_SCALE, 1 - Math.abs(position));
+                final float vertMargin = pageHeight * (1 - scaleFactor) / 2;
+                final float horzMargin = pageWidth * (1 - scaleFactor) / 2;
+
+                if (position < 0) {
+                    view.setTranslationX(horzMargin - vertMargin / 2);
+                } else {
+                    view.setTranslationX(-horzMargin + vertMargin / 2);
+                }
+
+                view.setScaleX(scaleFactor);
+                view.setScaleY(scaleFactor);
+            }
+        }
     }
 
     private class ArtistDetailFragmentPagerAdapter extends FragmentStatePagerAdapter {

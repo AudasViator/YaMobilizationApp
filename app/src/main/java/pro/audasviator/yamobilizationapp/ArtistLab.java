@@ -14,7 +14,7 @@ import java.util.List;
 
 public class ArtistLab {
     private static final String TAG = "ArtistLab";
-    private static final String ARTIST_LIST_NAME = "artist_list";
+    private static final String ARTIST_LIST_NAME = "artistList";
 
     private static ArtistLab sArtistLab;
 
@@ -50,6 +50,7 @@ public class ArtistLab {
         return mArtists.get(position);
     }
 
+    // В БД нет смысла, слишком простой случай
     public void saveArtists(List<Artist> artists) {
         try {
             FileOutputStream fos = mContext.openFileOutput(ARTIST_LIST_NAME, Context.MODE_PRIVATE);
@@ -72,7 +73,9 @@ public class ArtistLab {
         } catch (Exception e) {
             Log.w(TAG, "Can't load artists: " + e.getMessage());
             File file = new File(mContext.getFilesDir().getAbsolutePath() + "/" + ARTIST_LIST_NAME);
-            file.delete();
+            if (!file.delete()) {
+                Log.e(TAG, "Can't delete file!");
+            }
             return null;
         }
     }

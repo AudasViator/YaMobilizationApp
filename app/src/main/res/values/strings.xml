@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name" translatable="false">YaMobilizationApp</string>
     <string name="fragment_list_name">Artists</string>
+    <string name="fragment_list_downloading_error_toast">There are big problems!</string>
+    <string name="fragment_list_no_internet_toast">Check the internet connection</string>
 
     <plurals name="count_of_songs">
         <item quantity="one">%1$s song</item>

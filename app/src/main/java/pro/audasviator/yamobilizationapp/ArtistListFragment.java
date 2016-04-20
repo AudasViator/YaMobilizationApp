@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -23,6 +25,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -35,22 +38,25 @@ public class ArtistListFragment extends Fragment {
     public static final String EXTRA_STARTING_POSITION = "startingPosition";
     public static final String EXTRA_CURRENT_POSITION = "currentPosition";
 
+    private static final int REQUEST_CODE = 42;
+
     private RecyclerView mRecyclerView;
     private ArtistLab mArtistLab;
     private List<Artist> mArtistList;
     private SwipeRefreshLayout mRefreshLayout;
 
-    private Bundle mTmpReenterState;
+    private boolean mIsDetailsActivityStarted; // Вдруг пользователь просто свернул активти с этим фрагментом?
+    private Bundle mTmpReenterState; // Информация о shared elements (id|tag вьюхи, показывающей обложку)
+
+    // Вызывается перед началом анимации в другое активити
     private final SharedElementCallback mCallback = new SharedElementCallback() {
         @Override
         public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
             if (mTmpReenterState != null) {
-                int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
-                int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
+                int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION); // Откуда начали скоролить ViewPager
+                int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION); // Куда доскролили
                 if (startingPosition != currentPosition) {
-                    // If startingPosition != currentPosition the user must have swiped to a
-                    // different page in the DetailsActivity. We must update the shared element
-                    // so that the correct one falls into place.
+                    // Добавляем новую обложку из ViewPager`а в shared elements
                     String newTransitionName = String.valueOf(mArtistList.get(currentPosition).getId());
                     View newSharedElement = mRecyclerView.findViewWithTag(newTransitionName);
                     if (newSharedElement != null) {
@@ -65,22 +71,17 @@ public class ArtistListFragment extends Fragment {
             }
         }
     };
-    private boolean mIsDetailsActivityStarted;
 
     public static ArtistListFragment newInstance() {
         return new ArtistListFragment();
     }
 
-    public static Intent intentForReenter(int currentPosition, int startingPosition) {
+    // Взывается DetailFragment, дабы передать откуда и куда доскролился ViewPager
+    public static Intent makeIntentForAnimation(int currentPosition, int startingPosition) {
         Intent data = new Intent();
         data.putExtra(EXTRA_STARTING_POSITION, startingPosition);
         data.putExtra(EXTRA_CURRENT_POSITION, currentPosition);
         return data;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
     }
 
     @Override
@@ -109,31 +110,34 @@ public class ArtistListFragment extends Fragment {
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                mRefreshLayout.setRefreshing(true);
-                new FetchArtistTask().execute();
+                new FetchArtistTask().execute(getContext());
             }
         });
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.fragment_artist_list_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
-        mRecyclerView.addItemDecoration(new SimpleDividerItemDecoration(getContext()));
+        mRecyclerView.addItemDecoration(new amazingDividerItemDecoration(getContext()));
 
+        // Обновим за пользователя для первого раза
         if (mArtistList.size() == 0) {
-            mRefreshLayout.setRefreshing(true);
-            new FetchArtistTask().execute();
+            new FetchArtistTask().execute(getContext());
         }
 
         return view;
     }
 
+    // Подробности в ArtistDetailActivity
     @Override
-    public void onDetach() {
-        super.onDetach();
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mTmpReenterState = new Bundle(data.getExtras());
+        int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
+        int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
+        if (startingPosition != currentPosition) {
+            mRecyclerView.scrollToPosition(currentPosition);
+        }
     }
 
-    // После возвращения из деталей проверяем, скролил ли пользователь
-    // Если да, то скролим список и пускаем анимацию
     public void onActivityReenter(Intent data) {
         mTmpReenterState = new Bundle(data.getExtras());
         int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
@@ -147,8 +151,11 @@ public class ArtistListFragment extends Fragment {
             @Override
             public boolean onPreDraw() {
                 mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                // Сначала должны забиндиться вьюхи (дабы понять, куда двигать изображение)
+
+                // Сначала должны забиндиться вьюхи (дабы понять, какую обложку двигать)
                 mRecyclerView.requestLayout();
+
+                // А уже потом должна сработать анимация
                 getActivity().supportStartPostponedEnterTransition();
                 return true;
             }
@@ -176,10 +183,10 @@ public class ArtistListFragment extends Fragment {
                     Intent intent = ArtistDetailActivity.newIntent(getContext(), mPosition);
                     intent.putExtra(EXTRA_STARTING_POSITION, mPosition);
 
-                    if (!mIsDetailsActivityStarted) {
+                    if (!mIsDetailsActivityStarted) { // Дабы не тыкали дважды
                         mIsDetailsActivityStarted = true;
                         ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mCoverImageView, ViewCompat.getTransitionName(mCoverImageView));
-                        startActivity(intent, options.toBundle());
+                        startActivityForResult(intent, REQUEST_CODE, options.toBundle());
                     }
                 }
             });
@@ -200,7 +207,7 @@ public class ArtistListFragment extends Fragment {
 
             mPosition = position;
 
-            // Используем id в качестве тега (для поиска вьюхи) и имени для анимации
+            // Используем id в качестве имени для анимации и тега (для поиска вьюхи)
             String tagAndName = String.valueOf(artist.getId());
             ViewCompat.setTransitionName(mCoverImageView, tagAndName);
             mCoverImageView.setTag(tagAndName);
@@ -235,39 +242,64 @@ public class ArtistListFragment extends Fragment {
         }
     }
 
-    private class FetchArtistTask extends AsyncTask<Void, Void, Void> {
+    private class FetchArtistTask extends AsyncTask<Context, Void, Boolean> {
         private static final String TAG = "AsyncTask";
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mRefreshLayout.setRefreshing(true);
+        }
+
+        @Override
+        protected Boolean doInBackground(Context... params) {
+            if (!isDeviceOnline(params[0])) {
+                return false;
+            }
+
             try {
                 ArtistFetcher artistFetcher = new ArtistFetcher();
                 String json = artistFetcher.getJson();
                 List<Artist> artistList = artistFetcher.getArtistsFromJson(json);
-                Collections.sort(artistList);
+                Collections.sort(artistList); // Гайдлайны по Material дизайну настоятельно рекоменуют отсортировать
                 mArtistLab.setArtists(artistList);
                 mArtistList = artistList;
+                return true;
             } catch (IOException ioe) {
                 Log.e(TAG, "Can't get json", ioe);
             }
-
             return null;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
+        protected void onPostExecute(Boolean param) {
+            super.onPostExecute(param);
 
             mRefreshLayout.setRefreshing(false);
-            mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
+            // Троичный bool великолепен
+            if (param == null) {
+                Toast.makeText(getContext(), getString(R.string.fragment_list_downloading_error_toast), Toast.LENGTH_SHORT).show();
+            } else if (param) {
+                mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
+            } else {
+                Toast.makeText(getContext(), getString(R.string.fragment_list_no_internet_toast), Toast.LENGTH_SHORT).show();
+            }
+
+
+        }
+
+        private boolean isDeviceOnline(Context context) {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            return netInfo != null && netInfo.isConnectedOrConnecting();
         }
     }
 
     // Просто рисуем разделители между вьюхами в списке
-    private class SimpleDividerItemDecoration extends RecyclerView.ItemDecoration {
+    private class amazingDividerItemDecoration extends RecyclerView.ItemDecoration {
         private Drawable mDivider;
 
-        public SimpleDividerItemDecoration(Context context) {
+        public amazingDividerItemDecoration(Context context) {
             final TypedArray a = context.obtainStyledAttributes(new int[]{android.R.attr.listDivider});
             mDivider = a.getDrawable(0);
             a.recycle();

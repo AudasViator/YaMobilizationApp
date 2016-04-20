@@ -1,13 +1,13 @@
 package pro.audasviator.yamobilizationapp;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 public class ArtistListActivity extends AppCompatActivity {
-    private static final int REQUEST_CODE = 42;
-
     private ArtistListFragment mArtistListFragment;
 
     @Override
@@ -26,10 +26,26 @@ public class ArtistListActivity extends AppCompatActivity {
         }
     }
 
-    // После возвращения из деталей, передаёт во фрагмент куда пользователь доскролил
+    // ...is to let the called Activity send a hint about its state
+    //    so that this underlying Activity can prepare to be exposed...
+    // Добавляет в shared elements обложку из текущего положения ViewPager
+    // для обратной анимации. Заодно двигает лист к тому месту, куда доскролил пользователь
+    // Вызывается лишь в SDK>21, до него анимации нет
     @Override
     public void onActivityReenter(int resultCode, Intent data) {
         super.onActivityReenter(resultCode, data);
-        mArtistListFragment.onActivityReenter(data);
+        if (resultCode == Activity.RESULT_OK) {
+            mArtistListFragment.onActivityReenter(data);
+        }
+    }
+
+
+    // Просто двигает список к нужному месту
+    // На послеЛолипопах взывается уже после анимации. Слишком поздно
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }

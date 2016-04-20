@@ -108,3 +108,4 @@ public class Artist implements Comparable<Artist>, Parcelable, Serializable {
         dest.writeString(mDescription);
     }
 }
+// И прокоментировать нечего

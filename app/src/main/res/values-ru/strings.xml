@@ -15,4 +15,6 @@
         <item quantity="many">%1$s альбомов</item>
         <item quantity="other">%1$s альбомов</item>
     </plurals>
+    <string name="fragment_list_downloading_error_toast">Проблемы с обновлением</string>
+    <string name="fragment_list_no_internet_toast">Проверьте подключение к интернету</string>
 </resources>
