@@ -212,6 +212,7 @@ public class ArtistListFragment extends Fragment {
             ViewCompat.setTransitionName(mCoverImageView, tagAndName);
             mCoverImageView.setTag(tagAndName);
 
+            // Кушает кучу памяти (1/7th heap size)
             Picasso.with(getContext()).load(coverUrl).placeholder(R.drawable.the_place_holder).into(mCoverImageView);
         }
     }
@@ -239,6 +240,12 @@ public class ArtistListFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mArtistList.size();
+        }
+
+        // RecyclerView по умолчанию не перерабатывает вьюхи с неоконченной анимацией
+        @Override
+        public boolean onFailedToRecycleView(ArtistHolder holder) {
+            return true;
         }
     }
 
