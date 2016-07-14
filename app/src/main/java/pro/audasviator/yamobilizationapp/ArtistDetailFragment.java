@@ -9,7 +9,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +32,12 @@ public class ArtistDetailFragment extends Fragment {
     private int mStartingPosition;
     private int mCurrentPosition;
     private boolean mIsExpanded; // Toolbar
+    private TextView mCountTextView;
+    private TextView mGenresTextView;
+    private AppBarLayout mAppBarLayout;
+    private CollapsingToolbarLayout mCollapsingToolbar;
+    private Toolbar mToolbar;
+    private TextView mDescriptionTextView;
 
     public static ArtistDetailFragment newInstance(int currentPosition, int startingPosition) {
         Bundle args = new Bundle();
@@ -59,36 +64,37 @@ public class ArtistDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_artist_detail, container, false);
 
-        Toolbar toolbar = (Toolbar) view.findViewById(R.id.fragment_detail_toolbar);
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) view.findViewById(R.id.fragment_detail_toolbar);
+        mCollapsingToolbar = (CollapsingToolbarLayout) view.findViewById(R.id.fragment_detail_collapsing_toolbar);
+        mAppBarLayout = (AppBarLayout) view.findViewById(R.id.fragment_detail_appbar);
+        mCountTextView = (TextView) view.findViewById(R.id.fragment_detail_count_text_box);
+        mCoverImageView = (ImageView) view.findViewById(R.id.fragment_detail_cover_image_view);
+        mGenresTextView = (TextView) view.findViewById(R.id.fragment_detail_genres_text_box);
+        mDescriptionTextView = (TextView) view.findViewById(R.id.fragment_detail_description_text_view);
 
-        CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) view.findViewById(R.id.fragment_detail_collapsing_toolbar);
-        collapsingToolbar.setTitle(mArtist.getName());
+        ViewCompat.setTransitionName(mCoverImageView, String.valueOf(mArtist.getId()));
+        //startPostponedEnterTransition();
 
-        AppBarLayout appBarLayout = (AppBarLayout) view.findViewById(R.id.fragment_detail_appbar);
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+        //AppCompatActivity activity = (AppCompatActivity) getActivity();
+        //activity.setSupportActionBar(mToolbar);
+
+        mCollapsingToolbar.setTitle(mArtist.getName());
+
+        mAppBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                 mIsExpanded = (verticalOffset == 0); // Если оффсет == 0, значит тулбар развёрнут
             }
         });
 
-        TextView countTextView = (TextView) view.findViewById(R.id.fragment_detail_count_text_box);
         int countOfAlbums = mArtist.getCountOfAlbums();
         int countOfSongs = mArtist.getCountOfTracks();
         String count = getResources().getQuantityString(R.plurals.count_of_albums, countOfAlbums, countOfAlbums)
                 + "  " + getResources().getQuantityString(R.plurals.count_of_songs, countOfSongs, countOfSongs);
-        countTextView.setText(count); // Один ТекстВью, вместо двух. Экономия
+        mCountTextView.setText(count); // Один ТекстВью, вместо двух. Экономия
 
-        mCoverImageView = (ImageView) view.findViewById(R.id.fragment_detail_cover_image_view);
-        ViewCompat.setTransitionName(mCoverImageView, String.valueOf(mArtist.getId()));
-
-        TextView genresTextView = (TextView) view.findViewById(R.id.fragment_detail_genres_text_box);
-        genresTextView.setText(mArtist.getGenres());
-
-        TextView descriptionTextView = (TextView) view.findViewById(R.id.fragment_detail_description_text_view);
-        descriptionTextView.setText(mArtist.getDescription());
+        mGenresTextView.setText(mArtist.getGenres());
+        mDescriptionTextView.setText(mArtist.getDescription());
 
         // Пробуем загрузить из кеша маленькую обложку
         // Затем в любом случае скачиваем большую обложку
@@ -117,7 +123,8 @@ public class ArtistDetailFragment extends Fragment {
 
     private void startPostponedEnterTransition() {
         // Проверка, что анимация нужна
-        if (mCurrentPosition == mStartingPosition) {
+        if (false) {
+            //if (mCurrentPosition == mStartingPosition) {
             mCoverImageView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
                 @Override
                 public boolean onPreDraw() {

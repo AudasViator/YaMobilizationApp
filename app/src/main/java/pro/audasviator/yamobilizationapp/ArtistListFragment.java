@@ -1,5 +1,6 @@
 package pro.audasviator.yamobilizationapp;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
@@ -8,16 +9,19 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.SharedElementCallback;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.transition.ChangeBounds;
+import android.transition.ChangeImageTransform;
+import android.transition.ChangeTransform;
+import android.transition.TransitionSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -88,8 +92,8 @@ public class ArtistListFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.setExitSharedElementCallback(mCallback);
+        //AppCompatActivity activity = (AppCompatActivity) getActivity();
+        //activity.setExitSharedElementCallback(mCallback);
 
         mArtistLab = ArtistLab.get(getActivity());
         mArtistList = mArtistLab.getArtists();
@@ -185,8 +189,32 @@ public class ArtistListFragment extends Fragment {
 
                     if (!mIsDetailsActivityStarted) { // Дабы не тыкали дважды
                         mIsDetailsActivityStarted = true;
-                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mCoverImageView, ViewCompat.getTransitionName(mCoverImageView));
-                        startActivityForResult(intent, REQUEST_CODE, options.toBundle());
+                        //ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mCoverImageView, ViewCompat.getTransitionName(mCoverImageView));
+                        //startActivityForResult(intent, REQUEST_CODE, options.toBundle());
+
+                        ArtistViewPagerFragment artistViewPagerFragment = ArtistViewPagerFragment.newInstance(mPosition);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                            class DetailsTransition extends TransitionSet {
+                                public DetailsTransition() {
+                                    setOrdering(ORDERING_TOGETHER);
+                                    addTransition(new ChangeBounds()).
+                                            addTransition(new ChangeTransform()).
+                                            addTransition(new ChangeImageTransform());
+                                }
+                            }
+
+                            artistViewPagerFragment.setSharedElementEnterTransition(new DetailsTransition());
+                            artistViewPagerFragment.setSharedElementReturnTransition(new DetailsTransition());
+                        }
+
+                        getFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_list_container, artistViewPagerFragment)
+                                .addToBackStack(null)
+                                .addSharedElement(mCoverImageView, ViewCompat.getTransitionName(mCoverImageView))
+                                .commit();
                     }
                 }
             });

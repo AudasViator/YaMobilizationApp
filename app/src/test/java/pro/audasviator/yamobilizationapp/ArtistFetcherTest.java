@@ -22,8 +22,5 @@ public class ArtistFetcherTest {
         assertEquals(artist.getId(), 1080505);
         assertEquals(artist.getName(), "Tove Lo");
         assertEquals(artist.getUrlOfSmallCover(), "http://avatars.yandex.net/get-music-content/dfc531f5.p.1080505/300x300");
-
-
     }
-
 }

@@ -34,8 +34,11 @@ public class ArtistLab {
     }
 
     public List<Artist> getArtists() {
-        mArtists = loadArtists();
-        if (mArtists == null) {
+        List<Artist> tempArtists = loadArtists();
+
+        if (tempArtists != null) {
+            mArtists = tempArtists;
+        } else {
             mArtists = new ArrayList<>();
         }
         return mArtists;
