@@ -77,13 +77,17 @@ public class ArtistDetailFragment extends Fragment {
                 .noFade().networkPolicy(NetworkPolicy.OFFLINE).into(new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                Picasso.with(getContext()).load(mArtist.getUrlOfBigCover()).placeholder(new BitmapDrawable(getResources(), bitmap)).into(mCoverImageView);
+                if (isAdded()) {
+                    Picasso.with(getContext()).load(mArtist.getUrlOfBigCover()).placeholder(new BitmapDrawable(getResources(), bitmap)).into(mCoverImageView);
+                }
             }
 
             @Override
             public void onBitmapFailed(Drawable errorDrawable) {
-                Picasso.with(getContext()).load(mArtist.getUrlOfBigCover()).placeholder(R.drawable.the_place_holder)
-                        .priority(Picasso.Priority.HIGH).into(mCoverImageView);
+                if (isAdded()) {
+                    Picasso.with(getContext()).load(mArtist.getUrlOfBigCover()).placeholder(R.drawable.the_place_holder)
+                            .priority(Picasso.Priority.HIGH).into(mCoverImageView);
+                }
             }
 
             @Override

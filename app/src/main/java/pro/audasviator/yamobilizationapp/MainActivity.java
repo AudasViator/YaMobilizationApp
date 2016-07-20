@@ -1,6 +1,7 @@
 package pro.audasviator.yamobilizationapp;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
@@ -15,12 +16,17 @@ public class MainActivity extends AppCompatActivity implements ArtistViewPagerFr
 
         FragmentManager fm = getSupportFragmentManager();
 
-        if (mArtistListFragment == null) {
-            mArtistListFragment = ArtistListFragment.newInstance();
+        Fragment fragment = fm.findFragmentById(R.id.fragment_list_container);
+
+        mArtistListFragment = (ArtistListFragment) fm.findFragmentByTag("list");
+
+        if (fragment == null) {
+            fragment = ArtistListFragment.newInstance();
             fm.beginTransaction()
-                    .add(R.id.fragment_list_container, mArtistListFragment)
+                    .replace(R.id.fragment_list_container, fragment, "list")
                     .commit();
         }
+
     }
 
     @Override

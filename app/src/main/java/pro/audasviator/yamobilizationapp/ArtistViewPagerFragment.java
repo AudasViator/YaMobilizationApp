@@ -16,12 +16,15 @@ import android.view.ViewGroup;
 
 import java.util.List;
 
+import icepick.Icepick;
+import icepick.State;
+
 public class ArtistViewPagerFragment extends Fragment {
     private static final String ARG_CURRENT_POSITION = "currentPosition";
-
+    @State
+    int mCurrentPosition;
     private ViewPager mViewPager;
     private List<Artist> mArtists;
-    private int mCurrentPosition;
     private Callbacks mCallbacks;
 
     public static ArtistViewPagerFragment newInstance(int currentPosition) {
@@ -91,6 +94,17 @@ public class ArtistViewPagerFragment extends Fragment {
         mViewPager.setCurrentItem(mCurrentPosition);
 
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        Icepick.saveInstanceState(this, outState);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        Icepick.restoreInstanceState(this, savedInstanceState);
     }
 
     @Override

@@ -98,7 +98,6 @@ public class ArtistListFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     ArtistViewPagerFragment artistViewPagerFragment = ArtistViewPagerFragment.newInstance(mPosition);
                     getFragmentManager()
                             .beginTransaction()
