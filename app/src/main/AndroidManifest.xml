@@ -13,20 +13,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ArtistListActivity">
+            android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".ArtistDetailActivity"
-            android:parentActivityName=".ArtistListActivity"
-            android:theme="@style/DetailTheme">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="pro.audasviator.yamobilizationapp.ArtistListActivity"/>
-
         </activity>
     </application>
 

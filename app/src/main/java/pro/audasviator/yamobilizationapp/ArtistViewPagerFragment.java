@@ -1,5 +1,6 @@
 package pro.audasviator.yamobilizationapp;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,22 +16,13 @@ import android.view.ViewGroup;
 
 import java.util.List;
 
-/**
- * Created by prier on 14.07.2016.
- */
 public class ArtistViewPagerFragment extends Fragment {
     private static final String ARG_CURRENT_POSITION = "currentPosition";
-    private static final String STATE_CURRENT_PAGE_POSITION = "currentPage";
-
-    private static final String EXTRA_CURRENT_POSITION = "currentPosition";
-    private static final String EXTRA_STARTING_POSITION = "startingPosition";
 
     private ViewPager mViewPager;
     private List<Artist> mArtists;
-    private ArtistDetailFragment mCurrentArtistDetailFragment;
     private int mCurrentPosition;
-    private int mStartingPosition;
-    private boolean mIsReturning;
+    private Callbacks mCallbacks;
 
     public static ArtistViewPagerFragment newInstance(int currentPosition) {
         Bundle args = new Bundle();
@@ -40,6 +32,12 @@ public class ArtistViewPagerFragment extends Fragment {
         fragment.setArguments(args);
 
         return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
     }
 
     @Override
@@ -95,9 +93,19 @@ public class ArtistViewPagerFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks.onDetach(mCurrentPosition);
+    }
+
+    public interface Callbacks {
+        void onDetach(int currentPosition);
+    }
+
     private static class ZoomOutPageTransformer implements ViewPager.PageTransformer {
 
-        private static final float MIN_SCALE = 0.85f;
+        private static final float MIN_SCALE = 0.9f;
 
         private ViewPager mViewPager;
         private float mPositionFixer;
@@ -144,13 +152,12 @@ public class ArtistViewPagerFragment extends Fragment {
 
         @Override
         public Fragment getItem(int position) {
-            return ArtistDetailFragment.newInstance(position, mStartingPosition);
+            return ArtistDetailFragment.newInstance(position);
         }
 
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
-            mCurrentArtistDetailFragment = (ArtistDetailFragment) object;
         }
 
         @Override
