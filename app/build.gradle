@@ -37,6 +37,7 @@ dependencies {
     compile 'com.android.support:support-v4:24.1.0'
     compile "com.android.support:support-v13:24.1.0"
     compile 'com.android.support:design:24.1.0'
+    compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
     compile 'frankiesardo:icepick:3.2.0'
     provided 'frankiesardo:icepick-processor:3.2.0'
 }

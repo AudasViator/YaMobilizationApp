@@ -13,8 +13,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -32,7 +34,8 @@ public class ArtistListFragment extends Fragment {
     private ArtistLab mArtistLab;
     private List<Artist> mArtistList;
     private SwipeRefreshLayout mRefreshLayout;
-    private int mScrollTo; // Костыль :(
+    private Toolbar mToolbar;
+    private int mScrollTo;
 
 
     public static ArtistListFragment newInstance() {
@@ -42,7 +45,6 @@ public class ArtistListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mArtistLab = ArtistLab.get(getActivity());
         mArtistList = mArtistLab.getArtists();
     }
@@ -51,6 +53,22 @@ public class ArtistListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_artist_list, container, false);
+
+        mToolbar = (Toolbar) view.findViewById(R.id.fragment_artist_list_toolbar);
+        mToolbar.setTitle(R.string.fragment_list_name);
+        mToolbar.inflateMenu(R.menu.main_menu);
+        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_about:
+                        AboutFragment aboutFragment = new AboutFragment();
+                        aboutFragment.show(getFragmentManager(), "about_fragment");
+                        return true;
+                }
+                return false;
+            }
+        });
 
         mRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.fragment_artists_list_refresh_layout);
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -171,7 +189,7 @@ public class ArtistListFragment extends Fragment {
 
         @Override
         protected Boolean doInBackground(Context... params) {
-            if (!isDeviceOnline(params[0])) {
+            if (!isDeviceOnline(params[0].getApplicationContext())) {
                 return false;
             }
 

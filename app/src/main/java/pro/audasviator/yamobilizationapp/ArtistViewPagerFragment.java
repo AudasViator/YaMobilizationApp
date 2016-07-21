@@ -1,5 +1,6 @@
 package pro.audasviator.yamobilizationapp;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import android.support.v4.view.WindowInsetsCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import java.util.List;
 
@@ -53,6 +55,8 @@ public class ArtistViewPagerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_artist_detail, container, false);
+
+        setStatusBarTranslucent(true);
 
         mViewPager = (ViewPager) view.findViewById(R.id.fragment_detail_container_view_pager);
         mArtists = ArtistLab.get(getContext()).getArtists();
@@ -110,7 +114,20 @@ public class ArtistViewPagerFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        setStatusBarTranslucent(false);
         mCallbacks.onDetach(mCurrentPosition);
+    }
+
+    private void setStatusBarTranslucent(boolean makeTranslucent) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        if (makeTranslucent) {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        } else {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
     }
 
     public interface Callbacks {

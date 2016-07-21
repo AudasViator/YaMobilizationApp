@@ -60,8 +60,6 @@ public class ArtistDetailFragment extends Fragment {
         mGenresTextView = (TextView) view.findViewById(R.id.fragment_detail_genres_text_box);
         mDescriptionTextView = (TextView) view.findViewById(R.id.fragment_detail_description_text_view);
 
-        mCollapsingToolbar.setTitle(mArtist.getName());
-
         int countOfAlbums = mArtist.getCountOfAlbums();
         int countOfSongs = mArtist.getCountOfTracks();
         String count = getResources().getQuantityString(R.plurals.count_of_albums, countOfAlbums, countOfAlbums)

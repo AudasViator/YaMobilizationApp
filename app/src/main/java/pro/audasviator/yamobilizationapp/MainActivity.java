@@ -12,7 +12,6 @@ public class MainActivity extends AppCompatActivity implements ArtistViewPagerFr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_list);
-        setTitle(R.string.fragment_list_name);
 
         FragmentManager fm = getSupportFragmentManager();
 
@@ -25,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements ArtistViewPagerFr
             fm.beginTransaction()
                     .replace(R.id.fragment_list_container, fragment, "list")
                     .commit();
+            mArtistListFragment = (ArtistListFragment) fragment;
         }
 
     }
