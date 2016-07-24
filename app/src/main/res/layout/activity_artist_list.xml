@@ -1,7 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/fragment_list_container"
-             xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-</FrameLayout>
+    <FrameLayout
+        android:id="@+id/fragment_list_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+    <RelativeLayout
+        android:id="@+id/activity_headset_layout"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        android:background="#323232"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/activity_headset_button_music"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:src="@mipmap/ic_music"/>
+
+        <ImageView
+            android:id="@+id/activity_headset_button_radio"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toLeftOf="@id/activity_headset_button_music"
+            android:layout_toStartOf="@id/activity_headset_button_music"
+            android:src="@mipmap/ic_radio"/>
+    </RelativeLayout>
+
+</RelativeLayout>
