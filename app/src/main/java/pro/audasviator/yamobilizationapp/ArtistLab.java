@@ -22,7 +22,7 @@ public class ArtistLab {
     private List<Artist> mArtists;
 
     private ArtistLab(Context context) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         mArtists = new ArrayList<>();
     }
 
@@ -34,8 +34,11 @@ public class ArtistLab {
     }
 
     public List<Artist> getArtists() {
-        mArtists = loadArtists();
-        if (mArtists == null) {
+        List<Artist> tempArtists = loadArtists();
+
+        if (tempArtists != null) {
+            mArtists = tempArtists;
+        } else {
             mArtists = new ArrayList<>();
         }
         return mArtists;

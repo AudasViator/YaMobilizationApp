@@ -1,7 +1,6 @@
 package pro.audasviator.yamobilizationapp;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -10,19 +9,16 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.SharedElementCallback;
-import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,79 +28,47 @@ import com.squareup.picasso.Picasso;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class ArtistListFragment extends Fragment {
-    public static final String EXTRA_STARTING_POSITION = "startingPosition";
-    public static final String EXTRA_CURRENT_POSITION = "currentPosition";
-
-    private static final int REQUEST_CODE = 42;
-
     private RecyclerView mRecyclerView;
     private ArtistLab mArtistLab;
     private List<Artist> mArtistList;
     private SwipeRefreshLayout mRefreshLayout;
+    private Toolbar mToolbar;
+    private int mScrollTo;
 
-    private boolean mIsDetailsActivityStarted; // Вдруг пользователь просто свернул активти с этим фрагментом?
-    private Bundle mTmpReenterState; // Информация о shared elements (id|tag вьюхи, показывающей обложку)
-
-    // Вызывается перед началом анимации в другое активити
-    private final SharedElementCallback mCallback = new SharedElementCallback() {
-        @Override
-        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
-            if (mTmpReenterState != null) {
-                int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION); // Откуда начали скоролить ViewPager
-                int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION); // Куда доскролили
-                if (startingPosition != currentPosition) {
-                    // Добавляем новую обложку из ViewPager`а в shared elements
-                    String newTransitionName = String.valueOf(mArtistList.get(currentPosition).getId());
-                    View newSharedElement = mRecyclerView.findViewWithTag(newTransitionName);
-                    if (newSharedElement != null) {
-                        names.clear();
-                        names.add(newTransitionName);
-                        sharedElements.clear();
-                        sharedElements.put(newTransitionName, newSharedElement);
-                    }
-                }
-
-                mTmpReenterState = null;
-            }
-        }
-    };
 
     public static ArtistListFragment newInstance() {
         return new ArtistListFragment();
     }
 
-    // Взывается DetailFragment, дабы передать откуда и куда доскролился ViewPager
-    public static Intent makeIntentForAnimation(int currentPosition, int startingPosition) {
-        Intent data = new Intent();
-        data.putExtra(EXTRA_STARTING_POSITION, startingPosition);
-        data.putExtra(EXTRA_CURRENT_POSITION, currentPosition);
-        return data;
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        activity.setExitSharedElementCallback(mCallback);
-
         mArtistLab = ArtistLab.get(getActivity());
         mArtistList = mArtistLab.getArtists();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mIsDetailsActivityStarted = false;
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_artist_list, container, false);
+
+        mToolbar = (Toolbar) view.findViewById(R.id.fragment_artist_list_toolbar);
+        mToolbar.setTitle(R.string.fragment_list_name);
+        mToolbar.inflateMenu(R.menu.main_menu);
+        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_about:
+                        AboutFragment aboutFragment = new AboutFragment();
+                        aboutFragment.show(getFragmentManager(), "about_fragment");
+                        return true;
+                }
+                return false;
+            }
+        });
 
         mRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.fragment_artists_list_refresh_layout);
         mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -119,6 +83,9 @@ public class ArtistListFragment extends Fragment {
         mRecyclerView.setAdapter(new ArtistAdapter(mArtistList));
         mRecyclerView.addItemDecoration(new amazingDividerItemDecoration(getContext()));
 
+        // Скроллим RecyclerView до того же места, что и ViewPager
+        mRecyclerView.getLayoutManager().smoothScrollToPosition(mRecyclerView, null, mScrollTo);
+
         // Обновим за пользователя для первого раза
         if (mArtistList.size() == 0) {
             new FetchArtistTask().execute(getContext());
@@ -127,39 +94,8 @@ public class ArtistListFragment extends Fragment {
         return view;
     }
 
-    // Подробности в ArtistDetailActivity
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mTmpReenterState = new Bundle(data.getExtras());
-        int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
-        int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
-        if (startingPosition != currentPosition) {
-            mRecyclerView.scrollToPosition(currentPosition);
-        }
-    }
-
-    public void onActivityReenter(Intent data) {
-        mTmpReenterState = new Bundle(data.getExtras());
-        int startingPosition = mTmpReenterState.getInt(EXTRA_STARTING_POSITION);
-        int currentPosition = mTmpReenterState.getInt(EXTRA_CURRENT_POSITION);
-        if (startingPosition != currentPosition) {
-            mRecyclerView.scrollToPosition(currentPosition);
-        }
-
-        getActivity().supportPostponeEnterTransition();
-        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-
-                // Сначала должны забиндиться вьюхи (дабы понять, какую обложку двигать)
-                mRecyclerView.requestLayout();
-
-                // А уже потом должна сработать анимация
-                getActivity().supportStartPostponedEnterTransition();
-                return true;
-            }
-        });
+    public void scrollTo(int position) {
+        mScrollTo = position;
     }
 
     private class ArtistHolder extends RecyclerView.ViewHolder {
@@ -180,14 +116,12 @@ public class ArtistListFragment extends Fragment {
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = ArtistDetailActivity.newIntent(getContext(), mPosition);
-                    intent.putExtra(EXTRA_STARTING_POSITION, mPosition);
-
-                    if (!mIsDetailsActivityStarted) { // Дабы не тыкали дважды
-                        mIsDetailsActivityStarted = true;
-                        ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mCoverImageView, ViewCompat.getTransitionName(mCoverImageView));
-                        startActivityForResult(intent, REQUEST_CODE, options.toBundle());
-                    }
+                    ArtistViewPagerFragment artistViewPagerFragment = ArtistViewPagerFragment.newInstance(mPosition);
+                    getFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_list_container, artistViewPagerFragment)
+                            .addToBackStack(null)
+                            .commit();
                 }
             });
         }
@@ -206,11 +140,6 @@ public class ArtistListFragment extends Fragment {
             mCountTextView.setText(count);
 
             mPosition = position;
-
-            // Используем id в качестве имени для анимации и тега (для поиска вьюхи)
-            String tagAndName = String.valueOf(artist.getId());
-            ViewCompat.setTransitionName(mCoverImageView, tagAndName);
-            mCoverImageView.setTag(tagAndName);
 
             // Кушает кучу памяти (1/7th heap size)
             Picasso.with(getContext()).load(coverUrl).placeholder(R.drawable.the_place_holder).into(mCoverImageView);
@@ -260,7 +189,7 @@ public class ArtistListFragment extends Fragment {
 
         @Override
         protected Boolean doInBackground(Context... params) {
-            if (!isDeviceOnline(params[0])) {
+            if (!isDeviceOnline(params[0].getApplicationContext())) {
                 return false;
             }
 

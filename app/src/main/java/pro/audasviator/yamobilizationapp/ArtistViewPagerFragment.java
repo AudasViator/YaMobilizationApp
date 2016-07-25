@@ -1,91 +1,70 @@
 package pro.audasviator.yamobilizationapp;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.SharedElementCallback;
 import android.support.v4.view.OnApplyWindowInsetsListener;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.WindowInsetsCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.view.WindowManager;
 
 import java.util.List;
-import java.util.Map;
 
-public class ArtistDetailActivity extends AppCompatActivity {
-    private static final String STATE_CURRENT_PAGE_POSITION = "currentPage";
+import icepick.Icepick;
+import icepick.State;
 
-    private static final String EXTRA_CURRENT_POSITION = "currentPosition";
-    private static final String EXTRA_STARTING_POSITION = "startingPosition";
-
+public class ArtistViewPagerFragment extends Fragment {
+    private static final String ARG_CURRENT_POSITION = "currentPosition";
+    @State
+    int mCurrentPosition;
     private ViewPager mViewPager;
     private List<Artist> mArtists;
-    private ArtistDetailFragment mCurrentArtistDetailFragment;
-    private int mCurrentPosition;
-    private int mStartingPosition;
-    private boolean mIsReturning;
+    private Callbacks mCallbacks;
 
-    // Вызывается после кнопки назад, но перед анимацией
-    // Добавляет текущее изображение в shared elements
-    private final SharedElementCallback mCallback = new SharedElementCallback() {
-        @Override
-        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
-            if (mIsReturning) {
-                // Если CollapsingBar свёрнут, то будет null
-                ImageView sharedElement = mCurrentArtistDetailFragment.getCoverImage();
-                if (sharedElement == null) {
-                    names.clear();
-                    sharedElements.clear();
-                } else if (mStartingPosition != mCurrentPosition) {
-                    names.clear();
-                    String transactionName = ViewCompat.getTransitionName(sharedElement);
-                    names.add(transactionName);
-                    sharedElements.clear();
-                    sharedElements.put(transactionName, sharedElement);
-                }
-            }
-        }
-    };
+    public static ArtistViewPagerFragment newInstance(int currentPosition) {
+        Bundle args = new Bundle();
+        args.putInt(ARG_CURRENT_POSITION, currentPosition);
 
-    public static Intent newIntent(Context context, int position) {
-        Intent intent = new Intent(context, ArtistDetailActivity.class);
-        intent.putExtra(EXTRA_CURRENT_POSITION, position);
-        return intent;
+        ArtistViewPagerFragment fragment = new ArtistViewPagerFragment();
+        fragment.setArguments(args);
+
+        return fragment;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mCallbacks = (Callbacks) context;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_artist_detail);
+        mCurrentPosition = getArguments().getInt(ARG_CURRENT_POSITION);
+    }
 
-        supportPostponeEnterTransition();
-        setEnterSharedElementCallback(mCallback);
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_artist_view_pager, container, false);
 
-        mStartingPosition = getIntent().getIntExtra(EXTRA_STARTING_POSITION, 0);
-        if (savedInstanceState == null) {
-            mCurrentPosition = mStartingPosition;
-        } else {
-            mCurrentPosition = savedInstanceState.getInt(STATE_CURRENT_PAGE_POSITION);
-        }
+        setStatusBarTranslucent(true);
 
-        mViewPager = (ViewPager) findViewById(R.id.fragment_detail_container_view_pager);
-        mArtists = ArtistLab.get(getApplicationContext()).getArtists();
+        mViewPager = (ViewPager) view.findViewById(R.id.fragment_detail_container_view_pager);
+        mArtists = ArtistLab.get(getContext()).getArtists();
 
-        FragmentManager fm = getSupportFragmentManager();
+        FragmentManager fm = getFragmentManager();
 
         mViewPager.setAdapter(new ArtistDetailFragmentPagerAdapter(fm));
-        mViewPager.setCurrentItem(mCurrentPosition);
         mViewPager.setPageTransformer(false, new ZoomOutPageTransformer(mViewPager));
-        mViewPager.setClipChildren(false);
-        mViewPager.setClipToPadding(false);
 
         // Отслеживаем текущую страницу для изменения изображения для анимации
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -115,24 +94,49 @@ public class ArtistDetailActivity extends AppCompatActivity {
                         return consumed ? insets.consumeSystemWindowInsets() : insets;
                     }
                 });
+
+        mViewPager.setCurrentItem(mCurrentPosition);
+
+        return view;
     }
 
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(STATE_CURRENT_PAGE_POSITION, mCurrentPosition);
+    public void onSaveInstanceState(Bundle outState) {
+        Icepick.saveInstanceState(this, outState);
     }
 
     @Override
-    public void onBackPressed() {
-        mIsReturning = true;
-        setResult(RESULT_OK, ArtistListFragment.makeIntentForAnimation(mCurrentPosition, mStartingPosition));
-        super.onBackPressed();
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        Icepick.restoreInstanceState(this, savedInstanceState);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        setStatusBarTranslucent(false);
+        mCallbacks.onDetach(mCurrentPosition);
+    }
+
+    private void setStatusBarTranslucent(boolean makeTranslucent) {
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        if (makeTranslucent) {
+            activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        } else {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
+    }
+
+    public interface Callbacks {
+        void onDetach(int currentPosition);
     }
 
     private static class ZoomOutPageTransformer implements ViewPager.PageTransformer {
 
-        private static final float MIN_SCALE = 0.8f;
+        private static final float MIN_SCALE = 0.9f;
 
         private ViewPager mViewPager;
         private float mPositionFixer;
@@ -179,13 +183,12 @@ public class ArtistDetailActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem(int position) {
-            return ArtistDetailFragment.newInstance(position, mStartingPosition);
+            return ArtistDetailFragment.newInstance(position);
         }
 
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
-            mCurrentArtistDetailFragment = (ArtistDetailFragment) object;
         }
 
         @Override

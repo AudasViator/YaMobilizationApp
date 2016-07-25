@@ -4,6 +4,15 @@
     <string name="fragment_list_downloading_error_toast">There are big problems!</string>
     <string name="fragment_list_no_internet_toast">Check the internet connection</string>
 
+    <string name="menu_about">About</string>
+
+    <string name="about_title">About</string>
+    <string name="about_message">This app was developed by Sanya. Do you want to email him?</string>
+    <string name="about_positive_button">Yes!</string>
+    <string name="about_negative_button">No!</string>
+    <string name="intent_chooser_title_send_email">Send email…</string>
+    <string name="headset_text">You like it</string>
+
     <plurals name="count_of_songs">
         <item quantity="one">%1$s song</item>
         <item quantity="other">%1$s songs</item>
