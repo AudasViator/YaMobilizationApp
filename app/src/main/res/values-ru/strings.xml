@@ -17,4 +17,11 @@
     </plurals>
     <string name="fragment_list_downloading_error_toast">Проблемы с обновлением</string>
     <string name="fragment_list_no_internet_toast">Проверьте подключение к интернету</string>
+    <string name="about_title">О программе</string>
+    <string name="about_negative_button">Нет</string>
+    <string name="about_positive_button">Да</string>
+    <string name="headset_text">Вам понравится</string>
+    <string name="intent_chooser_title_send_email">Отправить...</string>
+    <string name="menu_about">О программе</string>
+    <string name="about_message" translatable="false">Программу сделал Саша. Написать ему?</string>
 </resources>
